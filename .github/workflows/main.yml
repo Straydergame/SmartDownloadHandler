@@ -23,10 +23,8 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install dependencies
-        run: |
-          pip install buildozer
-          buildozer init
+      - name: Install Buildozer
+        run: pip install buildozer
 
       - name: Set up Android SDK
         run: |
