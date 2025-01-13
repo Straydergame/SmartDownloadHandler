@@ -26,6 +26,9 @@ jobs:
       - name: Install Buildozer
         run: pip install buildozer
 
+      - name: Install Cython
+        run: pip install cython
+
       - name: Set up Android SDK
         run: |
           sudo apt-get update
