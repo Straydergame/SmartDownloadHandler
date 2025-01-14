@@ -14,12 +14,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Docker
+      - name: Install Docker
+        run: |
+          sudo apt update
+          sudo apt install -y docker.io
+
+      - name: Build Docker Image
         run: |
           git clone https://github.com/kivy/buildozer
           cd buildozer
-          docker build --tag=buildozer .
+          docker build -t buildozer .
 
-      - name: Build APK in Docker
+      - name: Run Buildozer in Docker
         run: |
-          docker run --volume ${PWD}:/home/user/hostcwd buildozer buildozer android debug
+          docker run --rm -v $PWD:/home/user/hostcwd buildozer buildozer android debug
