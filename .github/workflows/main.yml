@@ -29,6 +29,6 @@ jobs:
           cd buildozer
           docker build -t buildozer .
 
-      - name: Run Buildozer in Docker
+      - name: Run Buildozer to Build APK
         run: |
-          docker run --rm -v $PWD:/home/user/hostcwd buildozer buildozer android debug
+          docker run --rm -v $PWD:/home/user/hostcwd buildozer "buildozer -v android debug"
