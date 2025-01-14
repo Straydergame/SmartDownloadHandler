@@ -14,21 +14,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Docker from Official Repo
+      - name: Install Docker
         run: |
           sudo apt-get update
-          sudo apt-get remove docker docker-engine docker.io containerd runc || true
-          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
-          sudo apt-get update
-          sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+          sudo apt-get install -y docker.io
 
       - name: Build Docker Image for Buildozer
         run: |
-          git clone https://github.com/kivy/buildozer
+          git clone https://github.com/kivy/buildozer.git
           cd buildozer
           docker build -t buildozer .
 
       - name: Run Buildozer to Build APK
         run: |
-          docker run --rm -v $PWD:/home/user/hostcwd buildozer "buildozer -v android debug"
+          docker run --rm -v ${{ github.workspace }}:/home/user/hostcwd buildozer buildozer -v android debug
