@@ -1,4 +1,4 @@
-name: Build APK
+name: Build APK with Docker
 
 on:
   push:
@@ -14,27 +14,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install dependencies
+      - name: Set up Docker
         run: |
-          sudo apt update
-          sudo apt install -y openjdk-11-jdk
-          pip install buildozer cython
+          git clone https://github.com/kivy/buildozer
+          cd buildozer
+          docker build --tag=buildozer .
 
-      - name: Set up Android SDK
+      - name: Build APK in Docker
         run: |
-          mkdir -p $ANDROID_HOME/cmdline-tools
-          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
-          unzip -q commandlinetools-linux-9477386_latest.zip -d $ANDROID_HOME/cmdline-tools
-          mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
-
-      - name: Install Android Tools
-        run: |
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "build-tools;33.0.0" "platforms;android-31" "cmdline-tools;latest"
-          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-
-      - name: Copy Build Tools to cmdline-tools
-        run: |
-          cp -r $ANDROID_HOME/build-tools $ANDROID_HOME/cmdline-tools/cmdline-tools/
-
-      - name: Build APK
-        run: buildozer android debug
+          docker run --volume ${PWD}:/home/user/hostcwd buildozer buildozer android debug
