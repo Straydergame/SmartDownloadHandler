@@ -12,14 +12,33 @@ jobs:
 
       - name: Build with Buildozer
         run: |
+          # Install buildozer and dependencies
           pip3 install --user --upgrade buildozer Cython virtualenv
           export PATH=$PATH:~/.local/bin/
           export APP_ANDROID_ACCEPT_SDK_LICENSE=1
           export BUILDOZER_WARN_ON_ROOT=0
+          
+          # Install required packages
           sudo apt update
           sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses6 cmake libffi-dev libssl-dev
-          sudo ln -s /lib/x86_64-linux-gnu/libncurses.so.6 /lib/x86_64-linux-gnu/libtinfo.so.5
+          
+          # Create symbolic links for missing libraries
           sudo ln -s /lib/x86_64-linux-gnu/libncurses.so.6 /lib/x86_64-linux-gnu/libncurses.so.5
+          sudo ln -s /lib/x86_64-linux-gnu/libncurses.so.6 /lib/x86_64-linux-gnu/libtinfo.so.5
+          
+          # Install Android SDK components
+          mkdir -p $ANDROID_HOME/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
+          unzip -q commandlinetools-linux-9477386_latest.zip -d $ANDROID_HOME/cmdline-tools
+          mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+          
+          # Accept SDK licenses
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          
+          # Install required build tools and platforms
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;31.0.0" "platforms;android-31" "cmdline-tools;latest"
+          
+          # Build the APK
           cd ${{ github.workspace }}
           buildozer android debug
 
