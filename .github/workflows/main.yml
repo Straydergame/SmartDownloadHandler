@@ -30,12 +30,11 @@ jobs:
       - name: Install Android Tools
         run: |
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --install "platform-tools" "build-tools;33.0.0" "platforms;android-31" "cmdline-tools;latest"
-          echo y | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
-      - name: Fix Missing AIDL (Build Tools)
+      - name: Copy Build Tools to cmdline-tools
         run: |
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;31.0.0" --install
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "build-tools;36.0.0-rc3" --install || true
+          cp -r $ANDROID_HOME/build-tools $ANDROID_HOME/cmdline-tools/cmdline-tools/
 
       - name: Build APK
         run: buildozer android debug
