@@ -10,45 +10,45 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up environment and dependencies
+      - name: Install dependencies
         run: |
-          # Install dependencies
           sudo apt update
           sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses6 cmake libffi-dev libssl-dev
-          
-          # Fix for missing libncurses5 and libtinfo5
-          sudo ln -s /lib/x86_64-linux-gnu/libncurses.so.6 /lib/x86_64-linux-gnu/libncurses.so.5
-          sudo ln -s /lib/x86_64-linux-gnu/libtinfo.so.6 /lib/x86_64-linux-gnu/libtinfo.so.5
-          
-          # Install Buildozer and Cython
+          sudo ln -s /lib/x86_64-linux-gnu/libncurses.so.6 /lib/x86_64-linux-gnu/libncurses.so.5 || true
+          sudo ln -s /lib/x86_64-linux-gnu/libtinfo.so.6 /lib/x86_64-linux-gnu/libtinfo.so.5 || true
           pip3 install --user --upgrade buildozer Cython virtualenv
           export PATH=$PATH:~/.local/bin/
-          export APP_ANDROID_ACCEPT_SDK_LICENSE=1
-          export BUILDOZER_WARN_ON_ROOT=0
 
       - name: Install Android SDK and Build Tools
         run: |
-          # Set up Android SDK
           mkdir -p $ANDROID_HOME/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
           unzip -q commandlinetools-linux-9477386_latest.zip -d $ANDROID_HOME/cmdline-tools
           mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
-
-          # Accept SDK licenses
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          
-          # Install required Android tools
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;31.0.0" "platforms;android-31" "cmdline-tools;latest"
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;33.0.0" "platforms;android-31" "cmdline-tools;latest"
+
+      - name: Fix AIDL Path
+        run: |
+          if [ ! -f $ANDROID_HOME/build-tools/33.0.0/aidl ]; then
+            echo "AIDL not found in build-tools. Creating symlink..."
+            ln -s $ANDROID_HOME/cmdline-tools/latest/bin/aidl $ANDROID_HOME/build-tools/33.0.0/aidl
+          fi
+
+      - name: Configure Buildozer Paths
+        run: |
+          export ANDROIDSDK=$ANDROID_HOME
+          export ANDROIDNDK=$ANDROID_HOME/ndk/27.2.12479018
+          export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/33.0.0
+
+      - name: Clean Buildozer Files
+        run: |
+          rm -rf .buildozer
+          rm -rf bin
 
       - name: Build APK
         run: |
-          # Change to the GitHub workspace
           cd ${{ github.workspace }}
-
-          # Clear old buildozer files to avoid conflicts
-          rm -rf .buildozer
-          
-          # Build the APK
           buildozer -v android debug
 
       - name: Upload APK artifact
