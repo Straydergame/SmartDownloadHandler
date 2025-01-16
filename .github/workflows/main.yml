@@ -1,6 +1,10 @@
 name: Build APK
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
 jobs:
   build-android:
@@ -19,27 +23,23 @@ jobs:
           pip3 install --user --upgrade buildozer Cython virtualenv
           export PATH=$PATH:~/.local/bin/
 
-      - name: Install Android SDK and Build Tools
+      - name: Set up Android SDK
         run: |
+          export ANDROID_HOME=/usr/local/lib/android/sdk
           mkdir -p $ANDROID_HOME/cmdline-tools
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip
           unzip -q commandlinetools-linux-9477386_latest.zip -d $ANDROID_HOME/cmdline-tools
           mv $ANDROID_HOME/cmdline-tools/cmdline-tools $ANDROID_HOME/cmdline-tools/latest
+
+      - name: Accept SDK Licenses
+        run: |
+          export ANDROID_HOME=/usr/local/lib/android/sdk
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;33.0.0" "platforms;android-31" "cmdline-tools;latest"
 
-      - name: Fix AIDL Path
+      - name: Install Android Build Tools
         run: |
-          if [ ! -f $ANDROID_HOME/build-tools/33.0.0/aidl ]; then
-            echo "AIDL not found in build-tools. Creating symlink..."
-            ln -s $ANDROID_HOME/cmdline-tools/latest/bin/aidl $ANDROID_HOME/build-tools/33.0.0/aidl
-          fi
-
-      - name: Configure Buildozer Paths
-        run: |
-          export ANDROIDSDK=$ANDROID_HOME
-          export ANDROIDNDK=$ANDROID_HOME/ndk/27.2.12479018
-          export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/33.0.0
+          export ANDROID_HOME=/usr/local/lib/android/sdk
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;33.0.0" "platforms;android-31"
 
       - name: Clean Buildozer Files
         run: |
@@ -48,10 +48,12 @@ jobs:
 
       - name: Build APK
         run: |
-          cd ${{ github.workspace }}
+          export ANDROIDSDK=/usr/local/lib/android/sdk
+          export ANDROIDNDK=/usr/local/lib/android/sdk/ndk/27.2.12479018
+          export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/33.0.0
           buildozer -v android debug
 
-      - name: Upload APK artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
           name: SmartDownloadHandler.apk
