@@ -41,6 +41,19 @@ jobs:
           export ANDROID_HOME=/usr/local/lib/android/sdk
           $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platform-tools" "build-tools;33.0.0" "platforms;android-31"
 
+      - name: Fix AIDL Path
+        run: |
+          if [ ! -f $ANDROID_HOME/build-tools/33.0.0/aidl ]; then
+            echo "AIDL not found in build-tools. Creating symlink..."
+            ln -s $ANDROID_HOME/cmdline-tools/latest/bin/aidl $ANDROID_HOME/build-tools/33.0.0/aidl
+          fi
+
+      - name: Configure Buildozer Paths
+        run: |
+          export ANDROIDSDK=/usr/local/lib/android/sdk
+          export ANDROIDNDK=/usr/local/lib/android/sdk/ndk/27.2.12479018
+          export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/33.0.0
+
       - name: Clean Buildozer Files
         run: |
           rm -rf .buildozer
@@ -48,12 +61,10 @@ jobs:
 
       - name: Build APK
         run: |
-          export ANDROIDSDK=/usr/local/lib/android/sdk
-          export ANDROIDNDK=/usr/local/lib/android/sdk/ndk/27.2.12479018
-          export PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/33.0.0
+          cd ${{ github.workspace }}
           buildozer -v android debug
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v3
         with:
           name: SmartDownloadHandler.apk
